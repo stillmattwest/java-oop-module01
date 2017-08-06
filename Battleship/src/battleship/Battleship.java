@@ -1,9 +1,14 @@
 package battleship;
 
 import java.util.Scanner;
+import java.util.Random;
 
 public class Battleship {
-
+	// in the gameArray a value of zero indicates an empty square
+	// 1 indicates a square occupied by a player ship
+	// 2 indicates a square occupied by a computer ship
+	// 3 indicates a square where a ship has been destroyed.
+	
 	private int[][] gameArray;
 
 	// starts a new game, used from the launcher
@@ -11,6 +16,7 @@ public class Battleship {
 		createGameArray();
 		drawGrid();
 		placePlayerShips();
+		placeComputerShips();
 
 	}
 
@@ -32,6 +38,10 @@ public class Battleship {
 				switch (getSquareValue(row, col)) {
 				case 1:
 					display = "@";
+					break;
+				//temp case for development
+				case 2:
+					display = "C";
 					break;
 				case 3:
 					display = "X";
@@ -59,10 +69,6 @@ public class Battleship {
 		gameArray[x][y] = val;
 	}
 
-	// method for deploying a ship
-	private void deployShip(int x, int y, int player) {
-		setSquareValue(x,y,player);
-	}
 
 	// method for allowing player to place five ships
 	private void placePlayerShips() {
@@ -74,10 +80,38 @@ public class Battleship {
 			x = input.nextInt();
 			System.out.println("Enter Y coordinate for your ship: ");
 			y = input.nextInt();
-			deployShip(x, y, 1);
+			setSquareValue(x, y, 1);
 			drawGrid();
 			System.out.println("You have placed " + i + " of 5 ships.");
 		}
 		input.close();
+	}
+	
+	// method for generating random numbers
+	private int getRandom(int min, int max) {
+		Random rand = new Random();
+		int result = rand.nextInt(max) + min;
+		return result;
+	}
+	
+	//method for placing computer ships
+	private void placeComputerShips() {
+		int x;
+		int y;
+		for(int i = 1; i < 6; i++) {
+			x = getRandom(0,9);
+			y = getRandom(0,9);
+			setSquareValue(x,y,2);
+			// wait a bit for extra drama
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+			// then alert player
+			System.out.println(i+". computer ship DEPLOYED");
+			
+		}
+		drawGrid();
 	}
 }
