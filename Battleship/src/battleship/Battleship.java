@@ -8,8 +8,12 @@ public class Battleship {
 	// 1 indicates a square occupied by a player ship
 	// 2 indicates a square occupied by a computer ship
 	// 3 indicates a square where a ship has been destroyed.
-	
+
 	private int[][] gameArray;
+	private boolean gameOver = false;
+	Scanner input = new Scanner(System.in);
+	int playerShips = 5;
+	int computerShips = 5;
 
 	// starts a new game, used from the launcher
 	public void start() {
@@ -17,7 +21,7 @@ public class Battleship {
 		drawGrid();
 		placePlayerShips();
 		placeComputerShips();
-
+		playerTurn();
 	}
 
 	// method for populating game array
@@ -39,9 +43,9 @@ public class Battleship {
 				case 1:
 					display = "@";
 					break;
-				//temp case for development
+				// temp case for development
 				case 2:
-					display = "C";
+					display = " ";
 					break;
 				case 3:
 					display = "X";
@@ -69,49 +73,167 @@ public class Battleship {
 		gameArray[x][y] = val;
 	}
 
-
 	// method for allowing player to place five ships
 	private void placePlayerShips() {
-		Scanner input = new Scanner(System.in);
+		
 		int x;
 		int y;
-		for (int i = 1; i < 6; i++) {
+		int squareValue;
+		int shipCount = 0;
+		while (shipCount < 5) {
 			System.out.println("Enter X coordinate for your ship: ");
 			x = input.nextInt();
 			System.out.println("Enter Y coordinate for your ship: ");
 			y = input.nextInt();
-			setSquareValue(x, y, 1);
+			squareValue = getSquareValue(x, y);
+			if (squareValue == 0) {
+				setSquareValue(x, y, 1);
+				shipCount++;
+			} else {
+				System.out.println("You already have a ship in that square.");
+			}
 			drawGrid();
-			System.out.println("You have placed " + i + " of 5 ships.");
+			System.out.println("You have placed " + shipCount + " of 5 ships.");
 		}
-		input.close();
 	}
-	
+
 	// method for generating random numbers
 	private int getRandom(int min, int max) {
 		Random rand = new Random();
 		int result = rand.nextInt(max) + min;
 		return result;
 	}
-	
-	//method for placing computer ships
+
+	// method for placing computer ships
 	private void placeComputerShips() {
 		int x;
 		int y;
-		for(int i = 1; i < 6; i++) {
-			x = getRandom(0,9);
-			y = getRandom(0,9);
-			setSquareValue(x,y,2);
-			// wait a bit for extra drama
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
+		int squareValue;
+		int shipCount = 0;
+		while (shipCount < 5) {
+			x = getRandom(0, 9);
+			y = getRandom(0, 9);
+			squareValue = getSquareValue(x, y);
+			if (squareValue == 0) {
+				setSquareValue(x, y, 2);
+				shipCount++;
+				// wait a bit for extra drama
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
+				// then alert player
+				System.out.println(shipCount + ". computer ship DEPLOYED");
 			}
-			// then alert player
-			System.out.println(i+". computer ship DEPLOYED");
-			
 		}
 		drawGrid();
 	}
+
+	// method for player's turn
+	private void playerTurn() {
+		int x;
+		int y;
+		int hit;
+		drawGrid();
+	    System.out.println("Your ships: "+playerShips+" | Computer Ships: "+computerShips);
+		System.out.println("YOUR TURN");
+		System.out.println("Enter X Coordinate for target:");
+		x = input.nextInt();
+		System.out.println("Enter Y Coordinate for target:");
+		y = input.nextInt();
+		hit = getSquareValue(x, y);
+		switch (hit) {
+		case 1:
+			System.out.println("You just sank one of your OWN ships.");
+			System.out.println("Thanks for the help but I'm more than capable of beating you on my own.");
+			playerShips--;
+			break;
+		case 2:
+			System.out.println("You sunk one of my ships! This will not go unpunished.");
+			computerShips--;
+			break;
+		case 3:
+			System.out.println("Someone already attacked that square. How does it feel to waste a turn?");
+			break;
+		default:
+			System.out.println("You missed.");
+			break;
+		}
+		setSquareValue(x, y, 3);
+		isGameOver();
+		if (!gameOver) {
+			computerTurn();
+		} else {
+			if(playerShips > 0) {
+				System.out.println("YOU WIN. Thanks, gg.");
+			}else {
+				System.out.println("Okay... suicide is a strategy now, I guess.");
+			}
+			
+			input.close();
+		}
+
+	}
+
+	// method for computer's turn
+
+	private void computerTurn() {
+		int x = getRandom(0, 9);
+		int y = getRandom(0, 9);
+		System.out.println("COMPUTER TURN");
+		int hit = getSquareValue(x, y);
+		switch (hit) {
+		case 1:
+			System.out.println("Computer attacked square " + x + "," + y);
+			System.out.println("Got you!");
+			setSquareValue(x, y, 3);
+			break;
+		case 2:
+			computerTurn();
+			break;
+		case 3:
+			computerTurn();
+			break;
+		default:
+			System.out.println("Computer attacked square " + x + "," + y + " and missed.");
+			setSquareValue(x, y, 3);
+			break;
+		}
+
+		isGameOver();
+		if (!gameOver) {
+			playerTurn();
+		} else {
+			System.out.println("COMPUTER WINS. It's not your fault, your brain is analog. gg");
+			input.close();
+		}
+
+	}
+
+	// method for checking if game is over
+	private void isGameOver() {
+		int playerShips = 0;
+		int computerShips = 0;
+		int squareValue;
+		for (int row = 0; row < gameArray.length; row++) {
+			for (int col = 0; col < gameArray[row].length; col++) {
+				squareValue = getSquareValue(row, col);
+				switch (squareValue) {
+				case 1:
+					playerShips++;
+					break;
+				case 2:
+					computerShips++;
+					break;
+				default:
+					break;
+				}
+			}
+		}
+		if (playerShips == 0 || computerShips == 0) {
+			gameOver = true;
+		}
+	}
+
 }
